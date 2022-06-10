@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 
-#include "drfl/DRFLEx.h"
+#include "DRFLEx.h"
 using namespace DRAFramework;
 
 #undef NDEBUG
@@ -293,7 +293,7 @@ uint32_t ThreadFunc(void* arg) {
 }
 
 void OnDisConnected() {
-  while (!Drfl.open_connection("192.168.137.100")) {
+  while (!Drfl.open_connection("192.168.0.114")) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 }
@@ -410,7 +410,7 @@ int main(int argc, char** argv) {
   Drfl.set_on_disconnected(OnDisConnected);
 
   // ���� ����
-  assert(Drfl.open_connection("192.168.137.100"));
+  assert(Drfl.open_connection("192.168.0.114"));
 
   // ���� ���� ȹ��
   SYSTEM_VERSION tSysVerion = {
@@ -430,7 +430,7 @@ int main(int argc, char** argv) {
 
   // ���� ���� ����
 
-  assert(Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS));
+  assert(Drfl.set_robot_mode(ROBOT_MODE_MANUAL));
   assert(Drfl.set_robot_system(ROBOT_SYSTEM_REAL));
 
   // Drfl.ConfigCreateModbus("mr1", "192.168.137.70", 552,
@@ -487,19 +487,22 @@ int main(int argc, char** argv) {
                 << "\x1B[0m\x1B[0K" << std::endl;
     }
 #else
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    std::this_thread::sleep_for(std::chrono::microseconds(1));
 #endif  // __XENO__
-#if 0
-        static char ch = '0';
-        if (ch == '7') ch = '0';
-        else if (ch == '0') ch = '7';
-#else
-    cout << "\ninput key : ";
+
+// #if 0
+//         static char ch = '0';
+//         if (ch == '7') ch = '0';
+//         else if (ch == '0') ch = '7';
+// #else
+    cout << "\nOptions\n";
+    cout << "q: quit  |  0: test basic API (currently broken)  |  1: connect_rt  |  2: set_rt  \n3: start_rt  |  4: stop_rt  |  5: servoj_rt  |  6: servol_rt  \n7: speedj_rt  |  8: speedl_rt  |  9: torque_rt\n";
+    cout << "input key : ";
     // char ch = _getch();
     char ch;
     cin >> ch;
     cout << ch << endl;
-#endif
+// #endif
     switch (ch) {
       case 'q':
         bLoop = FALSE;
@@ -544,32 +547,41 @@ int main(int argc, char** argv) {
       } break;
       case '1':
           {
-              //Drfl.connect_rt_control("127.0.0.1", 12348);
-              Drfl.connect_rt_control();
+            cout << "Connecting..." << endl;
+            Drfl.connect_rt_control("192.168.0.114");
+            // Drfl.connect_rt_control("127.0.0.1", 12345);
+            //Drfl.connect_rt_control();
+            cout << "Connected." << endl;
           }
           break;
       case '2':
           {
+              cout << "Setting..." << endl;
               string version = "v1.0";
               float period = 0.001;
               int losscount = 4;
-//              Drfl.set_rt_control_input(version, hz, losscount);
               Drfl.set_rt_control_output(version, period, losscount);
+              cout << "Set." << endl;
           }
           break;
       case '3':
-          {
-        	  Drfl.start_rt_control();
-          }
-          break;
+      {
+        cout << "Starting..." << endl;
+    	  Drfl.start_rt_control();
+        cout << "Started." << endl;
+      }
+      break;
       case '4':
 		  {
+        cout << "Stopping..." << endl;
 			  Drfl.stop_rt_control();
+        cout << "Stopped." << endl;
 		  }
       break;
       case '5':
       {
-			float vel[6] = {10, 10, 10, 10, 10, 10};
+      cout << "Servoj_rt preparing" << endl;
+			float vel[6] = {20, 20, 20, 20, 20, 20};
 			float acc[6] = {100, 100, 100, 100, 100, 100};
 			Drfl.set_velj_rt(vel);
 			Drfl.set_accj_rt(acc);
@@ -599,7 +611,7 @@ int main(int argc, char** argv) {
 			plan1.as[0]=0; plan1.as[1]=0; plan1.as[2]=0; plan1.as[3]=0; plan1.as[4]=0; plan1.as[5]=0;
 			plan1.af[0]=0; plan1.af[1]=0; plan1.af[2]=0; plan1.af[3]=0; plan1.af[4]=0; plan1.af[5]=0;
 			TrajectoryPlan(&plan1);
-
+      cout << "servoj_rt executing" << endl;
 			while(1)
 			{
 				time=(++count)*st;
@@ -609,20 +621,24 @@ int main(int argc, char** argv) {
 
 				for(int i=0; i<6; i++)
 				{
-					tra.vel[i]=None;
-					tra.acc[i]=None;
+					//tra.vel[i]=None;
+					//tra.acc[i]=None;
 				}
 
 				if(time > plan1.time)
 				{
 					time=0;
-					tra.pos[0]=10; tra.pos[1]=10; tra.pos[2]=10; tra.pos[3]=10; tra.pos[4]=10; tra.pos[5]=10;
+					tra.pos[0]=plan1.pf[0]; tra.pos[1]=plan1.pf[1]; tra.pos[2]=plan1.pf[2]; tra.pos[3]=plan1.pf[3]; tra.pos[4]=plan1.pf[4]; tra.pos[5]=plan1.pf[5];
 					for(int i=0; i<6; i++)
 					{
 						tra.vel[i]=0.0;
 						tra.acc[i]=0.0;
 					}
 				}
+        cout<<"time: "<<time<<endl;
+        printf("pos: 1:%f, 2:%f, 3:%f, 4:%f, 5:%f, 6:%f\n",tra.pos[0],tra.pos[1],tra.pos[2],tra.pos[3],tra.pos[4],tra.pos[5]);
+        printf("vel: 1:%f, 2:%f, 3:%f, 4:%f, 5:%f, 6:%f\n",tra.vel[0],tra.vel[1],tra.vel[2],tra.vel[3],tra.vel[4],tra.vel[5]);
+        printf("acc: 1:%f, 2:%f, 3:%f, 4:%f, 5:%f, 6:%f\n",tra.acc[0],tra.acc[1],tra.acc[2],tra.acc[3],tra.acc[4],tra.acc[5]);
 
 				Drfl.servoj_rt(tra.pos, tra.vel, tra.acc, st*ratio);
 
@@ -679,13 +695,17 @@ int main(int argc, char** argv) {
 
 				if(time > plan1.time)
 				{
-					time=0;
+					//time=0;
 					tra.pos[0]=450.0; tra.pos[1]=34.5; tra.pos[2]=442.5; tra.pos[3]=180; tra.pos[4]=180; tra.pos[5]=230;
 					for(int i=0; i<6; i++)
 					{
 						tra.vel[i]=0.0;
 						tra.acc[i]=0.0;
 					}
+          Drfl.servol_rt(tra.pos, tra.vel, tra.acc, st*ratio);
+
+  				rt_task_wait_period(NULL);
+          break;
 				}
 
 				Drfl.servol_rt(tra.pos, tra.vel, tra.acc, st*ratio);
@@ -860,7 +880,7 @@ int main(int argc, char** argv) {
         break;
     }
     // Sleep(100);
-    this_thread::sleep_for(std::chrono::milliseconds(100));
+    this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 
   Drfl.CloseConnection();

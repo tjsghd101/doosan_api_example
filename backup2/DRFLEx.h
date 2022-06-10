@@ -129,7 +129,7 @@ namespace DRAFramework
         DRFL_API bool _speedj_rt(LPROBOTCONTROL pCtrl, float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime);
         DRFL_API bool _speedl_rt(LPROBOTCONTROL pCtrl, float fTargetVel[NUM_TASK], float fTargetAcc[NUM_TASK], float fTargetTime);
         DRFL_API bool _torque_rt(LPROBOTCONTROL pCtrl, float fMotorTor[NUM_JOINT], float fTargetTime);
-        //DRFL_API bool _change_operation_speed_rt(LPROBOTCONTROL pCtrl, float fSpeedRate); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //DRFL_API bool _change_operation_speed_rt(LPROBOTCONTROL pCtrl, float fSpeedRate); // Â÷ÈÄ °³¹ß
 
 
         ////////////////////////////////////////////////////////////////////////////
@@ -251,6 +251,7 @@ namespace DRAFramework
 
         DRFL_API double _get_override_speed(LPROBOTCONTROL pCtrl);
         
+        DRFL_API bool _set_workpiece_weight(LPROBOTCONTROL pCtrl, float fWeight = 0.0, float fCog[3] = COG_DEFAULT, COG_REFERENCE eCogRef = COG_REFERENCE_TCP, ADD_UP eAddUp = ADD_UP_REPLACE, float fStartTime = -10000, float fTransitionTIme = -10000);
         DRFL_API float _get_workpiece_weight(LPROBOTCONTROL pCtrl);
         DRFL_API bool _reset_workpiece_weight(LPROBOTCONTROL pCtrl);
          
@@ -310,6 +311,14 @@ namespace DRAFramework
 
         DRFL_API bool _speedj(LPROBOTCONTROL pCtrl, float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime);
         DRFL_API bool _speedl(LPROBOTCONTROL pCtrl, float fTargetVel[NUM_TASK], float fTargetAcc[2], float fTargetTime);
+
+
+        DRFL_API bool _servoj_g(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime);
+        DRFL_API bool _servol_g(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime);
+
+        DRFL_API bool _movesx_g(LPROBOTCONTROL pCtrl, float fTargetPos[MAX_SPLINE_POINT][NUM_TASK], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime /* = 0.f */, MOVE_MODE eMoveMode /* = MOVE_MODE_ABSOLUTE */, MOVE_REFERENCE eMoveReference /* = MOVE_REFERENCE_BASE */, SPLINE_VELOCITY_OPTION eVelOpt /* = SPLINE_VELOCITY_OPTION_DEFAULT */);
+        DRFL_API bool _movesj_g(LPROBOTCONTROL pCtrl, float fTargetPos[MAX_SPLINE_POINT][NUM_JOINT], unsigned char nPosCount, float fTargetVel, float fTargetAcc, float fTargetTime /* = 0.f */, MOVE_MODE eMoveMode /* = MOVE_MODE_ABSOLUTE */);
+
 
         ////////////////////////////////////////////////////////////////////////////
         //  GPIO Operations                                                       //
@@ -505,7 +514,7 @@ namespace DRAFramework
         bool speedj_rt(float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime){ return _speedj_rt(_rbtCtrlUDP, fTargetVel, fTargetAcc, fTargetTime); };
         bool speedl_rt(float fTargetVel[NUM_TASK], float fTargetAcc[NUM_TASK], float fTargetTime){ return _speedl_rt(_rbtCtrlUDP, fTargetVel, fTargetAcc, fTargetTime); };
         bool torque_rt(float fMotorTor[NUM_JOINT], float fTargetTime){ return _torque_rt(_rbtCtrlUDP, fMotorTor, fTargetTime); };
-        //bool change_operation_speed_rt(float fSpeedRate){ return _change_operation_speed_rt(_rbtCtrlUDP, fSpeedRate); }; //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //bool change_operation_speed_rt(float fSpeedRate){ return _change_operation_speed_rt(_rbtCtrlUDP, fSpeedRate); }; //Â÷ÈÄ °³¹ß
 
 
         ////////////////////////////////////////////////////////////////////////////
@@ -566,8 +575,9 @@ namespace DRAFramework
         LPROBOT_POSE get_desired_posx(COORDINATE_SYSTEM eCoodType = COORDINATE_SYSTEM_BASE){return _get_desired_posx(_rbtCtrl, eCoodType);};
         float get_orientation_error(float fPosition1[NUM_TASK], float fPosition2[NUM_TASK], TASK_AXIS eTaskAxis){return _get_orientation_error(_rbtCtrl, fPosition1, fPosition2, eTaskAxis); };
 
-        double get_override_speed(){return _get_override_speed(_rbtCtrl);};
+        //double get_override_speed(){return _get_override_speed(_rbtCtrl);};
 
+        bool set_workpiece_weight(float fWeight = 0.0, float fCog[3] = COG_DEFAULT, COG_REFERENCE eCogRef = COG_REFERENCE_TCP, ADD_UP eAddUp = ADD_UP_REPLACE, float fStartTime = -10000, float fTransitionTIme = -10000){return _set_workpiece_weight(_rbtCtrl, fWeight, fCog, eCogRef, eAddUp, fStartTime, fTransitionTIme); };
         float get_workpiece_weight(){return _get_workpiece_weight(_rbtCtrl);};
         bool reset_workpiece_weight(){return _reset_workpiece_weight(_rbtCtrl);};
         bool tp_popup_response(POPUP_RESPONSE eRes){return _tp_popup_response(_rbtCtrl, eRes);};
@@ -631,7 +641,7 @@ namespace DRAFramework
         DRL_PROGRAM_STATE get_program_state() { return _get_program_state(_rbtCtrl); };
 
         // set safe-stop reset type
-        bool set_safe_stop_reset_type(SAFE_STOP_RESET_TYPE eResetType = SAFE_STOP_RESET_TYPE_DEFAULT) { return(_set_safe_stop_reset_type(_rbtCtrl, eResetType)); }
+        bool set_safe_stop_reset_type(SAFE_STOP_RESET_TYPE eResetType = SAFE_STOP_RESET_TYPE_DEFAULT) { _set_safe_stop_reset_type(_rbtCtrl, eResetType); }
 
         // get roobot system alarm
         LPLOG_ALARM get_last_alarm() { return _get_last_alarm(_rbtCtrl); };
@@ -697,6 +707,14 @@ namespace DRAFramework
 
         bool speedj(float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime){ return _speedj(_rbtCtrl, fTargetVel, fTargetAcc, fTargetTime); };
         bool speedl(float fTargetVel[NUM_TASK], float fTargetAcc[2], float fTargetTime){ return _speedl(_rbtCtrl, fTargetVel, fTargetAcc, fTargetTime); };
+
+        bool servoj_g(float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime=0.f){ return _servoj_g(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime); };
+        bool servol_g(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime=0.f){ return _servol_g(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime); };
+
+        bool movesx_g(float fTargetPos[MAX_SPLINE_POINT][NUM_TASK], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, SPLINE_VELOCITY_OPTION eVelOpt = SPLINE_VELOCITY_OPTION_DEFAULT) { return _movesx_g(_rbtCtrl, fTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, eVelOpt); };
+        bool movesj_g(float fTargetPos[MAX_SPLINE_POINT][NUM_JOINT], unsigned char nPosCount, float fTargetVel, float fTargetAcc, float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE) { return _movesj_g(_rbtCtrl, fTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode); };
+
+
 
         ////////////////////////////////////////////////////////////////////////////
         //  GPIO Operations                                                       //
